@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Kalnoy\Nestedset\NestedSet;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ScopedNodeTest extends PHPUnit\Framework\TestCase
 {
@@ -159,11 +160,10 @@ class ScopedNodeTest extends PHPUnit\Framework\TestCase
         $this->assertOtherScopeNotAffected();
     }
 
-    /**
-     * @expectedException \Illuminate\Database\Eloquent\ModelNotFoundException
-     */
     public function testInsertionToParentFromOtherScope()
     {
+        $this->expectException(ModelNotFoundException::class);
+
         $node = MenuItem::create([ 'menu_id' => 2, 'parent_id' => 5 ]);
     }
 
@@ -193,30 +193,20 @@ class ScopedNodeTest extends PHPUnit\Framework\TestCase
         $this->assertEquals(1, $node->getLft());
     }
 
-    // Commented, cause there is no assertion here and otherwise the test is marked as risky in PHPUnit 7.
-    // What's the purpose of this method? @todo: remove/update?
-    /*public function testRebuildsTree()
-    {
-        $data = [];
-        MenuItem::scoped([ 'menu_id' => 2 ])->rebuildTree($data);
-    }*/
-
-    /**
-     * @expectedException LogicException
-     */
     public function testAppendingToAnotherScopeFails()
     {
+        $this->expectException(LogicException::class);
+
         $a = MenuItem::find(1);
         $b = MenuItem::find(3);
 
         $a->appendToNode($b)->save();
     }
 
-    /**
-     * @expectedException LogicException
-     */
     public function testInsertingBeforeAnotherScopeFails()
     {
+        $this->expectException(LogicException::class);
+
         $a = MenuItem::find(1);
         $b = MenuItem::find(3);
 

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Kalnoy\Nestedset\NestedSet;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class NodeTest extends PHPUnit\Framework\TestCase
 {
@@ -40,14 +41,6 @@ class NodeTest extends PHPUnit\Framework\TestCase
     {
         Capsule::table('categories')->truncate();
     }
-
-    // public static function tearDownAfterClass()
-    // {
-    //     $log = Capsule::getQueryLog();
-    //     foreach ($log as $item) {
-    //         echo $item['query']." with ".implode(', ', $item['bindings'])."\n";
-    //     }
-    // }
 
     public function assertTreeNotBroken($table = 'categories')
     {
@@ -104,11 +97,6 @@ class NodeTest extends PHPUnit\Framework\TestCase
         );
     }
 
-    /**
-     * @param $name
-     *
-     * @return \Category
-     */
     public function findCategory($name, $withTrashed = false)
     {
         $q = new Category;
@@ -221,32 +209,29 @@ class NodeTest extends PHPUnit\Framework\TestCase
         $this->assertNodeReceivesValidValues($node);
     }
 
-    /**
-     * @expectedException Exception
-     */
     public function testFailsToInsertIntoChild()
     {
+        $this->expectException(Exception::class);
+
         $node = $this->findCategory('notebooks');
         $target = $node->children()->first();
 
         $node->afterNode($target)->save();
     }
 
-    /**
-     * @expectedException Exception
-     */
     public function testFailsToAppendIntoItself()
     {
+        $this->expectException(Exception::class);
+
         $node = $this->findCategory('notebooks');
 
         $node->appendToNode($node)->save();
     }
 
-    /**
-     * @expectedException Exception
-     */
     public function testFailsToPrependIntoItself()
     {
+        $this->expectException(Exception::class);
+
         $node = $this->findCategory('notebooks');
 
         $node->prependTo($node)->save();
@@ -338,11 +323,10 @@ class NodeTest extends PHPUnit\Framework\TestCase
         $this->assertTrue($node->isRoot());
     }
 
-    /**
-     * @expectedException Exception
-     */
     public function testFailsToSaveNodeUntilNotInserted()
     {
+        $this->expectException(Exception::class);
+
         $node = new Category;
         $node->save();
     }
@@ -405,11 +389,10 @@ class NodeTest extends PHPUnit\Framework\TestCase
         $this->assertNull($this->findCategory('sony'));
     }
 
-    /**
-     * @expectedException Exception
-     */
     public function testFailsToSaveNodeUntilParentIsSaved()
     {
+        $this->expectException(Exception::class);
+
         $node = new Category(array('title' => 'Node'));
         $parent = new Category(array('title' => 'Parent'));
 
@@ -641,11 +624,10 @@ class NodeTest extends PHPUnit\Framework\TestCase
         $this->assertTrue($node->getDescendants()->isEmpty());
     }
 
-    /**
-     * @expectedException \Illuminate\Database\Eloquent\ModelNotFoundException
-     */
     public function testWhereDescendantsOf()
     {
+        $this->expectException(ModelNotFoundException::class);
+
         Category::whereDescendantOf(124)->get();
     }
 
@@ -852,11 +834,10 @@ class NodeTest extends PHPUnit\Framework\TestCase
         $this->assertTrue($nodes->count() > 1);
     }
 
-    /**
-     * @expectedException \Illuminate\Database\Eloquent\ModelNotFoundException
-     */
     public function testRebuildFailsWithInvalidPK()
     {
+        $this->expectException(ModelNotFoundException::class);
+
         Category::rebuildTree([ [ 'id' => 24 ] ]);
     }
 
@@ -869,23 +850,6 @@ class NodeTest extends PHPUnit\Framework\TestCase
         $this->assertEquals('samsung', $tree[2]->name);
         $this->assertEquals('galaxy', $tree[3]->name);
     }
-
-    // Commented, cause there is no assertion here and otherwise the test is marked as risky in PHPUnit 7.
-    // What's the purpose of this method? @todo: remove/update?
-    /*public function testSeveralNodesModelWork()
-    {
-        $category = new Category;
-
-        $category->name = 'test';
-
-        $category->saveAsRoot();
-
-        $duplicate = new DuplicateCategory;
-
-        $duplicate->name = 'test';
-
-        $duplicate->saveAsRoot();
-    }*/
 
     public function testWhereIsLeaf()
     {
