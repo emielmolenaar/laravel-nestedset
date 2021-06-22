@@ -26,7 +26,7 @@ class NodeTest extends PHPUnit\Framework\TestCase
 
     public function setUp(): void
     {
-        $data = include __DIR__.'/data/categories.php';
+        $data = include __DIR__ . '/data/categories.php';
 
         Capsule::table('categories')->insert($data);
 
@@ -54,18 +54,18 @@ class NodeTest extends PHPUnit\Framework\TestCase
         $checks[] = "from $table where _lft >= _rgt or (_rgt - _lft) % 2 = 0";
 
         // Check if lft and rgt values are unique
-        $checks[] = "from $table c1, $table c2 where c1.id <> c2.id and ".
+        $checks[] = "from $table c1, $table c2 where c1.id <> c2.id and " .
             "(c1._lft=c2._lft or c1._rgt=c2._rgt or c1._lft=c2._rgt or c1._rgt=c2._lft)";
 
         // Check if parent_id is set correctly
-        $checks[] = "from $table c, $table p, $table m where c.parent_id=p.id and m.id <> p.id and m.id <> c.id and ".
+        $checks[] = "from $table c, $table p, $table m where c.parent_id=p.id and m.id <> p.id and m.id <> c.id and " .
              "(c._lft not between p._lft and p._rgt or c._lft between m._lft and m._rgt and m._lft between p._lft and p._rgt)";
 
         foreach ($checks as $i => $check) {
-            $checks[$i] = 'select 1 as error '.$check;
+            $checks[$i] = 'select 1 as error ' . $check;
         }
 
-        $sql = 'select max(error) as errors from ('.implode(' union ', $checks).') _';
+        $sql = 'select max(error) as errors from (' . implode(' union ', $checks) . ') _';
 
         $actual = $connection->selectOne($sql);
 
@@ -77,10 +77,12 @@ class NodeTest extends PHPUnit\Framework\TestCase
 
     public function dumpTree($items = null)
     {
-        if ( ! $items) $items = Category::withTrashed()->defaultOrder()->get();
+        if (! $items) {
+            $items = Category::withTrashed()->defaultOrder()->get();
+        }
 
         foreach ($items as $item) {
-            echo PHP_EOL.($item->trashed() ? '-' : '+').' '.$item->name." ".$item->getKey().' '.$item->getLft()." ".$item->getRgt().' '.$item->getParentId();
+            echo PHP_EOL . ($item->trashed() ? '-' : '+') . ' ' . $item->name . " " . $item->getKey() . ' ' . $item->getLft() . " " . $item->getRgt() . ' ' . $item->getParentId();
         }
     }
 
@@ -99,7 +101,7 @@ class NodeTest extends PHPUnit\Framework\TestCase
 
     public function findCategory($name, $withTrashed = false)
     {
-        $q = new Category;
+        $q = new Category();
 
         $q = $withTrashed ? $q->withTrashed() : $q->newQuery();
 
@@ -327,7 +329,7 @@ class NodeTest extends PHPUnit\Framework\TestCase
     {
         $this->expectException(Exception::class);
 
-        $node = new Category;
+        $node = new Category();
         $node->save();
     }
 
@@ -598,14 +600,15 @@ class NodeTest extends PHPUnit\Framework\TestCase
     public function testCreatesTree()
     {
         $node = Category::create(
-        [
+            [
             'name' => 'test',
             'children' =>
             [
                 [ 'name' => 'test2' ],
                 [ 'name' => 'test3' ],
             ],
-        ]);
+            ]
+        );
 
         $this->assertTreeNotBroken();
 
@@ -619,7 +622,7 @@ class NodeTest extends PHPUnit\Framework\TestCase
 
     public function testDescendantsOfNonExistingNode()
     {
-        $node = new Category;
+        $node = new Category();
 
         $this->assertTrue($node->getDescendants()->isEmpty());
     }
@@ -651,8 +654,7 @@ class NodeTest extends PHPUnit\Framework\TestCase
     {
         $category = $this->findCategory('mobile');
 
-        foreach ($category->children()->take(2)->get() as $child)
-        {
+        foreach ($category->children()->take(2)->get() as $child) {
             $child->forceDelete();
         }
 
@@ -889,7 +891,9 @@ class NodeTest extends PHPUnit\Framework\TestCase
 
         foreach ($categories as $category) {
             $output["{$category->name} ({$category->id})}"] = $category->ancestors->count()
-                ? implode(' > ', $category->ancestors->map(function ($cat) { return "{$cat->name} ({$cat->id})"; })->toArray())
+                ? implode(' > ', $category->ancestors->map(function ($cat) {
+                    return "{$cat->name} ({$cat->id})";
+                })->toArray())
                 : '';
         }
 
@@ -921,7 +925,9 @@ class NodeTest extends PHPUnit\Framework\TestCase
 
         foreach ($categories as $category) {
             $output["{$category->name} ({$category->id})}"] = $category->ancestors->count()
-                ? implode(' > ', $category->ancestors->map(function ($cat) { return "{$cat->name} ({$cat->id})"; })->toArray())
+                ? implode(' > ', $category->ancestors->map(function ($cat) {
+                    return "{$cat->name} ({$cat->id})";
+                })->toArray())
                 : '';
         }
 
@@ -962,7 +968,6 @@ class NodeTest extends PHPUnit\Framework\TestCase
 
         $this->assertEquals(1, $category->getParentId());
     }
-
 }
 
 function all($items)

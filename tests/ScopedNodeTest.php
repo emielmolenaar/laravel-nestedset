@@ -26,7 +26,7 @@ class ScopedNodeTest extends PHPUnit\Framework\TestCase
 
     public function setUp(): void
     {
-        $data = include __DIR__.'/data/menu_items.php';
+        $data = include __DIR__ . '/data/menu_items.php';
 
         Capsule::table('menu_items')->insert($data);
 
