@@ -36,7 +36,7 @@ abstract class BaseRelation extends Relation
      */
     public function __construct(QueryBuilder $builder, Model $model)
     {
-        if ( ! NestedSet::isNode($model)) {
+        if (! NestedSet::isNode($model)) {
             throw new InvalidArgumentException('Model must be node.');
         }
 
@@ -76,14 +76,16 @@ abstract class BaseRelation extends Relation
      *
      * @return mixed
      */
-    public function getRelationExistenceQuery(EloquentBuilder $query, EloquentBuilder $parent,
-                                              $columns = [ '*' ]
+    public function getRelationExistenceQuery(
+        EloquentBuilder $query,
+        EloquentBuilder $parent,
+        $columns = [ '*' ]
     ) {
         $query = $this->getParent()->replicate()->newScopedQuery()->select($columns);
 
         $table = $query->getModel()->getTable();
 
-        $query->from($table.' as '.$hash = $this->getRelationCountHash());
+        $query->from($table . ' as ' . $hash = $this->getRelationCountHash());
 
         $query->getModel()->setTable($hash);
 
@@ -93,7 +95,8 @@ abstract class BaseRelation extends Relation
             $grammar->wrapTable($hash),
             $grammar->wrapTable($table),
             $grammar->wrap($this->parent->getLftName()),
-            $grammar->wrap($this->parent->getRgtName()));
+            $grammar->wrap($this->parent->getRgtName())
+        );
 
         return $query->whereRaw($condition);
     }
@@ -118,8 +121,9 @@ abstract class BaseRelation extends Relation
      *
      * @return mixed
      */
-    public function getRelationQuery(
-        EloquentBuilder $query, EloquentBuilder $parent,
+    public function getRelationshipQuery(
+        EloquentBuilder $query,
+        EloquentBuilder $parent,
         $columns = [ '*' ]
     ) {
         return $this->getRelationExistenceQuery($query, $parent, $columns);
@@ -128,11 +132,12 @@ abstract class BaseRelation extends Relation
     /**
      * Get a relationship join table hash.
      *
+     * @param  bool $incrementJoinCount
      * @return string
      */
-    public function getRelationCountHash()
+    public function getRelationCountHash($incrementJoinCount = true)
     {
-        return 'nested_set_'.self::$selfJoinCount++;
+        return 'nested_set_' . ($incrementJoinCount ? static::$selfJoinCount++ : static::$selfJoinCount);
     }
 
     /**
@@ -154,9 +159,10 @@ abstract class BaseRelation extends Relation
      */
     public function addEagerConstraints(array $models)
     {
-        $model = reset($models);
-
-        $this->query = $model->newScopedQuery();
+        // The first model in the array is always the parent, so add the scope constraints based on that model.
+        // @link https://github.com/laravel/framework/pull/25240
+        // @link https://github.com/lazychaser/laravel-nestedset/issues/351
+        optional($models[0])->applyNestedSetScope($this->query);
 
         $this->query->whereNested(function (Builder $inner) use ($models) {
             // We will use this query in order to apply constraints to the

@@ -2,10 +2,11 @@
 
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Kalnoy\Nestedset\NestedSet;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
-class NodeTest extends PHPUnit_Framework_TestCase
+class NodeTest extends PHPUnit\Framework\TestCase
 {
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         $schema = Capsule::schema();
 
@@ -23,9 +24,9 @@ class NodeTest extends PHPUnit_Framework_TestCase
         Capsule::enableQueryLog();
     }
 
-    public function setUp()
+    public function setUp(): void
     {
-        $data = include __DIR__.'/data/categories.php';
+        $data = include __DIR__ . '/data/categories.php';
 
         Capsule::table('categories')->insert($data);
 
@@ -36,18 +37,10 @@ class NodeTest extends PHPUnit_Framework_TestCase
         date_default_timezone_set('America/Denver');
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         Capsule::table('categories')->truncate();
     }
-
-    // public static function tearDownAfterClass()
-    // {
-    //     $log = Capsule::getQueryLog();
-    //     foreach ($log as $item) {
-    //         echo $item['query']." with ".implode(', ', $item['bindings'])."\n";
-    //     }
-    // }
 
     public function assertTreeNotBroken($table = 'categories')
     {
@@ -61,18 +54,18 @@ class NodeTest extends PHPUnit_Framework_TestCase
         $checks[] = "from $table where _lft >= _rgt or (_rgt - _lft) % 2 = 0";
 
         // Check if lft and rgt values are unique
-        $checks[] = "from $table c1, $table c2 where c1.id <> c2.id and ".
+        $checks[] = "from $table c1, $table c2 where c1.id <> c2.id and " .
             "(c1._lft=c2._lft or c1._rgt=c2._rgt or c1._lft=c2._rgt or c1._rgt=c2._lft)";
 
         // Check if parent_id is set correctly
-        $checks[] = "from $table c, $table p, $table m where c.parent_id=p.id and m.id <> p.id and m.id <> c.id and ".
+        $checks[] = "from $table c, $table p, $table m where c.parent_id=p.id and m.id <> p.id and m.id <> c.id and " .
              "(c._lft not between p._lft and p._rgt or c._lft between m._lft and m._rgt and m._lft between p._lft and p._rgt)";
 
         foreach ($checks as $i => $check) {
-            $checks[$i] = 'select 1 as error '.$check;
+            $checks[$i] = 'select 1 as error ' . $check;
         }
 
-        $sql = 'select max(error) as errors from ('.implode(' union ', $checks).') _';
+        $sql = 'select max(error) as errors from (' . implode(' union ', $checks) . ') _';
 
         $actual = $connection->selectOne($sql);
 
@@ -84,10 +77,12 @@ class NodeTest extends PHPUnit_Framework_TestCase
 
     public function dumpTree($items = null)
     {
-        if ( ! $items) $items = Category::withTrashed()->defaultOrder()->get();
+        if (! $items) {
+            $items = Category::withTrashed()->defaultOrder()->get();
+        }
 
         foreach ($items as $item) {
-            echo PHP_EOL.($item->trashed() ? '-' : '+').' '.$item->name." ".$item->getKey().' '.$item->getLft()." ".$item->getRgt().' '.$item->getParentId();
+            echo PHP_EOL . ($item->trashed() ? '-' : '+') . ' ' . $item->name . " " . $item->getKey() . ' ' . $item->getLft() . " " . $item->getRgt() . ' ' . $item->getParentId();
         }
     }
 
@@ -104,14 +99,9 @@ class NodeTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    /**
-     * @param $name
-     *
-     * @return \Category
-     */
     public function findCategory($name, $withTrashed = false)
     {
-        $q = new Category;
+        $q = new Category();
 
         $q = $withTrashed ? $q->withTrashed() : $q->newQuery();
 
@@ -221,32 +211,29 @@ class NodeTest extends PHPUnit_Framework_TestCase
         $this->assertNodeReceivesValidValues($node);
     }
 
-    /**
-     * @expectedException Exception
-     */
     public function testFailsToInsertIntoChild()
     {
+        $this->expectException(Exception::class);
+
         $node = $this->findCategory('notebooks');
         $target = $node->children()->first();
 
         $node->afterNode($target)->save();
     }
 
-    /**
-     * @expectedException Exception
-     */
     public function testFailsToAppendIntoItself()
     {
+        $this->expectException(Exception::class);
+
         $node = $this->findCategory('notebooks');
 
         $node->appendToNode($node)->save();
     }
 
-    /**
-     * @expectedException Exception
-     */
     public function testFailsToPrependIntoItself()
     {
+        $this->expectException(Exception::class);
+
         $node = $this->findCategory('notebooks');
 
         $node->prependTo($node)->save();
@@ -338,12 +325,11 @@ class NodeTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($node->isRoot());
     }
 
-    /**
-     * @expectedException Exception
-     */
     public function testFailsToSaveNodeUntilNotInserted()
     {
-        $node = new Category;
+        $this->expectException(Exception::class);
+
+        $node = new Category();
         $node->save();
     }
 
@@ -405,11 +391,10 @@ class NodeTest extends PHPUnit_Framework_TestCase
         $this->assertNull($this->findCategory('sony'));
     }
 
-    /**
-     * @expectedException Exception
-     */
     public function testFailsToSaveNodeUntilParentIsSaved()
     {
+        $this->expectException(Exception::class);
+
         $node = new Category(array('title' => 'Node'));
         $parent = new Category(array('title' => 'Parent'));
 
@@ -615,14 +600,15 @@ class NodeTest extends PHPUnit_Framework_TestCase
     public function testCreatesTree()
     {
         $node = Category::create(
-        [
+            [
             'name' => 'test',
             'children' =>
             [
                 [ 'name' => 'test2' ],
                 [ 'name' => 'test3' ],
             ],
-        ]);
+            ]
+        );
 
         $this->assertTreeNotBroken();
 
@@ -636,16 +622,15 @@ class NodeTest extends PHPUnit_Framework_TestCase
 
     public function testDescendantsOfNonExistingNode()
     {
-        $node = new Category;
+        $node = new Category();
 
         $this->assertTrue($node->getDescendants()->isEmpty());
     }
 
-    /**
-     * @expectedException \Illuminate\Database\Eloquent\ModelNotFoundException
-     */
     public function testWhereDescendantsOf()
     {
+        $this->expectException(ModelNotFoundException::class);
+
         Category::whereDescendantOf(124)->get();
     }
 
@@ -669,8 +654,7 @@ class NodeTest extends PHPUnit_Framework_TestCase
     {
         $category = $this->findCategory('mobile');
 
-        foreach ($category->children()->take(2)->get() as $child)
-        {
+        foreach ($category->children()->take(2)->get() as $child) {
             $child->forceDelete();
         }
 
@@ -827,8 +811,6 @@ class NodeTest extends PHPUnit_Framework_TestCase
             [ 'id' => '8' ],
         ]);
 
-        echo PHP_EOL.$fixed.PHP_EOL;
-
         $this->assertTrue($fixed > 0);
         $this->assertTreeNotBroken();
 
@@ -854,11 +836,10 @@ class NodeTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($nodes->count() > 1);
     }
 
-    /**
-     * @expectedException \Illuminate\Database\Eloquent\ModelNotFoundException
-     */
     public function testRebuildFailsWithInvalidPK()
     {
+        $this->expectException(ModelNotFoundException::class);
+
         Category::rebuildTree([ [ 'id' => 24 ] ]);
     }
 
@@ -870,21 +851,6 @@ class NodeTest extends PHPUnit_Framework_TestCase
         $this->assertCount(5, $tree);
         $this->assertEquals('samsung', $tree[2]->name);
         $this->assertEquals('galaxy', $tree[3]->name);
-    }
-
-    public function testSeveralNodesModelWork()
-    {
-        $category = new Category;
-
-        $category->name = 'test';
-
-        $category->saveAsRoot();
-
-        $duplicate = new DuplicateCategory;
-
-        $duplicate->name = 'test';
-
-        $duplicate->saveAsRoot();
     }
 
     public function testWhereIsLeaf()
@@ -925,7 +891,9 @@ class NodeTest extends PHPUnit_Framework_TestCase
 
         foreach ($categories as $category) {
             $output["{$category->name} ({$category->id})}"] = $category->ancestors->count()
-                ? implode(' > ', $category->ancestors->map(function ($cat) { return "{$cat->name} ({$cat->id})"; })->toArray())
+                ? implode(' > ', $category->ancestors->map(function ($cat) {
+                    return "{$cat->name} ({$cat->id})";
+                })->toArray())
                 : '';
         }
 
@@ -957,7 +925,9 @@ class NodeTest extends PHPUnit_Framework_TestCase
 
         foreach ($categories as $category) {
             $output["{$category->name} ({$category->id})}"] = $category->ancestors->count()
-                ? implode(' > ', $category->ancestors->map(function ($cat) { return "{$cat->name} ({$cat->id})"; })->toArray())
+                ? implode(' > ', $category->ancestors->map(function ($cat) {
+                    return "{$cat->name} ({$cat->id})";
+                })->toArray())
                 : '';
         }
 
@@ -998,7 +968,6 @@ class NodeTest extends PHPUnit_Framework_TestCase
 
         $this->assertEquals(1, $category->getParentId());
     }
-
 }
 
 function all($items)
