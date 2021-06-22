@@ -1,10 +1,4 @@
-[![Build Status](https://travis-ci.org/lazychaser/laravel-nestedset.svg?branch=master)](https://travis-ci.org/lazychaser/laravel-nestedset)
-[![Total Downloads](https://poser.pugx.org/kalnoy/nestedset/downloads.svg)](https://packagist.org/packages/kalnoy/nestedset)
-[![Latest Stable Version](https://poser.pugx.org/kalnoy/nestedset/v/stable.svg)](https://packagist.org/packages/kalnoy/nestedset)
-[![Latest Unstable Version](https://poser.pugx.org/kalnoy/nestedset/v/unstable.svg)](https://packagist.org/packages/kalnoy/nestedset)
-[![License](https://poser.pugx.org/kalnoy/nestedset/license.svg)](https://packagist.org/packages/kalnoy/nestedset)
-
-This is a Laravel 4-8 package for working with trees in relational databases.
+This is a Laravel 8 package for working with trees in relational databases.
 
 *   **Laravel 5.7, 5.8, 6.0, 7.0, 8.0** is supported since v5
 *   **Laravel 5.5, 5.6** is supported since v4.3
