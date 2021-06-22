@@ -33,10 +33,6 @@
     "prefer-stable": true,
 
     "extra": {
-        "branch-alias": {
-            "dev-master": "v5.0.x-dev"
-        },
-
         "laravel": {
             "providers": [
                 "Kalnoy\\Nestedset\\NestedSetServiceProvider"
